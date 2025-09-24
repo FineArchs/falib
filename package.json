@@ -1,0 +1,21 @@
+{
+  "name": "falib",
+  "version": "0.0.0",
+  "description": "Utility Library by FineArchs",
+  "type": "module",
+  "author": "finearchs",
+  "license": "ISC",
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc -p ./tsconfig.typecheck.json && vitest run --typecheck"
+  },
+  "exports": {
+    "./*": "./built/*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.6"
+  }
+}
