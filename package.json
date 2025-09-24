@@ -1,10 +1,11 @@
 {
-  "name": "falib",
+  "name": "@FineArchs/falib",
   "version": "0.0.0",
   "description": "Utility Library by FineArchs",
   "type": "module",
   "author": "finearchs",
   "license": "ISC",
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
   "scripts": {
     "build": "tsc",
     "test": "tsc -p ./tsconfig.typecheck.json && vitest run --typecheck"
