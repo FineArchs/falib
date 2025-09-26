@@ -22,7 +22,7 @@ jobs:
       - run: |
           npm ci
           npm version "$VERSION"
-          git add *
+          git add .
           git commit -m"$VERSION"
           git tag "$VERSION"
           git push
