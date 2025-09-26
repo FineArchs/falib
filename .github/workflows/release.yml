@@ -21,5 +21,6 @@ jobs:
       - uses: actions/setup-node@v4
       - run: npm ci
       - run: npm version "$VERSION"
+      - run: git config push.followTags true
       - run: git push
       - run: gh release create "v$VERSION"
