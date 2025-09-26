@@ -8,7 +8,7 @@ on:
   release:
     types: [created]
   workflow_run:
-    workflows: [Staging, Lab]
+    workflows: [Release]
     types:
       - completed
 
