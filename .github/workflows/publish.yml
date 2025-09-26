@@ -7,6 +7,10 @@ on:
   workflow_dispatch:
   release:
     types: [created]
+  workflow_run:
+    workflows: [Staging, Lab]
+    types:
+      - completed
 
 jobs:
   build:
