@@ -1,7 +1,7 @@
 {
-  "name": "@FineArchs/falib",
+  "name": "@FineArchs/arkset",
   "version": "0.0.0",
-  "description": "Utility Library by FineArchs",
+  "description": "Set object based upon arkType",
   "type": "module",
   "author": "finearchs",
   "license": "ISC",
@@ -21,7 +21,7 @@
     "typescript": "^5.7.3",
     "vitest": "^3.0.6"
   },
-  "workspaces": [
-    "packages/arkset"
-  ]
+  "dependencies": {
+    "arktype": "^2.1.22"
+  }
 }
