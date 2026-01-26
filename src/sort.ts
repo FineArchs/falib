@@ -1,3 +1,6 @@
+/**
+ * TODO: メタ情報のexport
+ */
 export type CompareFunction<T> = (a: T, b: T) => number;
 
 export type SortFunction<T> = (

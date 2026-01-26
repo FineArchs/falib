@@ -14,7 +14,7 @@ const testSet = <T>({name, compare, generate }: {
 	const sampleSets: SampleSet<T>[] = repeatMap(10, () => {
 		const len = Math.floor(11 * Math.random());
 		const sample = repeatMap(len, generate);
-		return { sample, answer: L.esSort(sample, compare) };
+		return { sample, answer: L.esSort(sample.map(v => v), compare) };
 	});
 	return { name, compare, sampleSets };
 };
@@ -39,7 +39,7 @@ const testSets = [
 describe.for(Object.entries(L.sorts))('%s', ([, sort]) => {
 	describe.each(testSets)('$name', tes => {
 		test.each(tes.sampleSets)('$sample -> $answer', ({ sample, answer }) => {
-			expect(sort(sample, tes.compare)).toEqual(answer);
+			expect(sort(sample.map(v => v), tes.compare)).toEqual(answer);
 		});
 	});
 });
