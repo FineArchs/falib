@@ -11,32 +11,32 @@ export type FromEntry<E extends [PropertyKey, unknown]> = {
  * declareでもよくない？とは思う
  */
 export const kvs2obj: <E extends [PropertyKey, unknown]>(kvs: E[]) => E
-	= Object.fromEntries as never;
+	= Object.fromEntries as any;
 
 export const obj2kvs: <T>(obj: T) => ObjEntry<T>[]
-	= Object.entries as never;
+	= Object.entries as any;
 
 export type Assigned<T extends object, S extends object>
 	= Omit<T, keyof S> & S;
 
 export const objAssign: <T extends object, S extends object>
 	(target: T, source: S) => Assigned<T, S>
-	= Object.assign as never;
+	= Object.assign as any;
 
 // 型ガードは元に代入可能な型でしかできない
 export const objAssertedAssign: <T extends object, S extends Partial<T>>
 	(target: T, source: S) => asserts target is T & S
-	= Object.assign as never;
+	= Object.assign as any;
 
 export const hasOwn: <T extends object>(obj: T, key: unknown) => key is keyof T
-	= Object.hasOwn as never;
+	= Object.hasOwn as any;
 
 export const arrIncl: <T>(arr: readonly T[], elem: unknown) => elem is T
-	= Array.prototype.includes.call as never;
+	= Array.prototype.includes.call as any;
 
-export const repeat = <T, Len extends number>(length: Len, v: T): (T[] & { length: Len }) => Array.from({ length }, () => v); 
+export const repeat = <T, Len extends number>(length: Len, v: T): (T[] & { length: Len }) => Array.from({ length }, () => v) as any; 
 
-export const repeatMap = <T, Len extends number>(length: Len, fn: (len: Len) => T): (T[] & { length: Len }) => Array.from({ length }, fn); 
+export const repeatMap = <T, Len extends number>(length: Len, fn: (len: Len) => T): (T[] & { length: Len }) => Array.from({ length }, fn) as any; 
 
 /*
  * Object <-> Map の変換
@@ -57,7 +57,7 @@ export function obj2map<K extends PropertyKey, V>(obj: Record<K, V>): Map<K, V> 
  * 配列用の関数をobject向けにしたもの
  */
 export function objMap<K extends PropertyKey, V, V2>(obj: Record<K, V>, cb: (v: V, k: K) => V2): Record<K, V2> {
-	return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, cb(v as V, k as K)])) as never;
+	return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, cb(v as V, k as K)])) as any;
 }
 
 /*
@@ -76,10 +76,10 @@ export function recursiveGet<T, K extends readonly PropertyKey[], Fail = undefin
 	let cd = obj;
 	for (const key of path) {
 		// has判定どうする？（できれば型と合わせたい）
-		if (cd == null) return onFail?.(key) as never;
+		if (cd == null) return onFail?.(key) as any;
 		cd = cd[key as never];
 	}
-	return cd as never;
+	return cd as any;
 }
 
 export function repeatApply<T>(initial: T, func: (v: T, i: number) => T, n: number) {
