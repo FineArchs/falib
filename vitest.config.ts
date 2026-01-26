@@ -8,5 +8,6 @@ export default defineConfig({
 		},
 		include: ['src/**/*.test.ts'],
 		exclude: ['test/testutils.ts'],
+		reporters: ['verbose'],
 	},
 });

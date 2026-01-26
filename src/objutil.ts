@@ -36,7 +36,7 @@ export const arrIncl: <T>(arr: readonly T[], elem: unknown) => elem is T
 
 export const repeat = <T, Len extends number>(length: Len, v: T): (T[] & { length: Len }) => Array.from({ length }, () => v) as any; 
 
-export const repeatMap = <T, Len extends number>(length: Len, fn: (len: Len) => T): (T[] & { length: Len }) => Array.from({ length }, fn) as any; 
+export const repeatMap = <T, Len extends number>(length: Len, fn: (i: Len) => T): (T[] & { length: Len }) => Array.from({ length }, fn) as any; 
 
 /*
  * Object <-> Map の変換
