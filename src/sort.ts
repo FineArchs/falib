@@ -1,6 +1,3 @@
-/**
- * TODO: メタ情報のexport
- */
 export type CompareFunction<T> = (a: T, b: T) => number;
 
 export type InPlaceSortFunction = <T>(arr: T[], compare: CompareFunction<T>) => T[];
@@ -86,5 +83,52 @@ export function selectionSort<T>(arr: T[], compare: CompareFunction<T>): T[] {
 }
 export const selectionSortDef = inPlaceSortDef({ isStable: false, sort: selectionSort });
 
-export const sortsRecord = { esSortDef, bubbleSortDef, selectionSortDef } as const satisfies { [key in string]: { name: key } & SortDef };
-export const sortsList = [esSortDef, bubbleSortDef, selectionSortDef] as const satisfies SortDef[];
+// stable in-place
+export function insertionSort<T>(arr: T[], compare: CompareFunction<T>): T[] {
+	const n = arr.length;
+	for (let i = 1; i < n; i++) {
+		const current = arr[i]!;
+		let j = i - 1;
+		while (j >= 0 && compare(arr[j]!, current) > 0) {
+			arr[j + 1] = arr[j]!;
+			j--;
+		}
+		arr[j + 1] = current;
+	}
+	return arr;
+}
+export const insertionSortDef = inPlaceSortDef({ isStable: true, sort: insertionSort });
+
+// unstable in-place
+export function quickSort<T>(arr: T[], compare: CompareFunction<T>): T[] {
+	function _quickSort(arr: T[], compare: CompareFunction<T>, left: number, right: number) {
+		if (left >= right) return;
+
+		const pivot = arr[Math.floor((left + right) / 2)]!;
+		let i = left;
+		let j = right;
+
+		while (i <= j) {
+			while (compare(arr[i]!, pivot) < 0) {
+				i++;
+			}
+			while (compare(arr[j]!, pivot) > 0) {
+				j--;
+			}
+			if (i <= j) {
+				[arr[i], arr[j]] = [arr[j]!, arr[i]!];
+				i++;
+				j--;
+			}
+		}
+
+		_quickSort(arr, compare, left, j);
+		_quickSort(arr, compare, i, right);
+	}
+	_quickSort(arr, compare, 0, arr.length - 1);
+	return arr;
+}
+export const quickSortDef = inPlaceSortDef({ isStable: false, sort: quickSort });
+
+export const sortsRecord = { esSortDef, bubbleSortDef, selectionSortDef, insertionSortDef, quickSortDef } as const satisfies { [key in string]: { name: key } & SortDef };
+export const sortsList = [esSortDef, bubbleSortDef, selectionSortDef, insertionSortDef, quickSortDef] as const satisfies SortDef[];
