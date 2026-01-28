@@ -68,5 +68,23 @@ export function bubbleSort<T>(arr: T[], compare: CompareFunction<T>): T[] {
 }
 export const bubbleSortDef = inPlaceSortDef({ isStable: true, sort: bubbleSort });
 
-export const sortsRecord = { esSortDef, bubbleSortDef } as const satisfies { [key in string]: { name: key } & SortDef };
-export const sortsList = [esSortDef, bubbleSortDef] as const satisfies SortDef[];
+// unstable in-place
+export function selectionSort<T>(arr: T[], compare: CompareFunction<T>): T[] {
+	const n = arr.length;
+	for (let i = 0; i < n - 1; i++) {
+		let minIndex = i;
+		for (let j = i + 1; j < n; j++) {
+			if (compare(arr[j]!, arr[minIndex]!) < 0) {
+				minIndex = j;
+			}
+		}
+		if (minIndex !== i) {
+			[arr[i], arr[minIndex]] = [arr[minIndex]!, arr[i]!];
+		}
+	}
+	return arr;
+}
+export const selectionSortDef = inPlaceSortDef({ isStable: false, sort: selectionSort });
+
+export const sortsRecord = { esSortDef, bubbleSortDef, selectionSortDef } as const satisfies { [key in string]: { name: key } & SortDef };
+export const sortsList = [esSortDef, bubbleSortDef, selectionSortDef] as const satisfies SortDef[];

@@ -43,23 +43,42 @@ const testSets = [
 const snapshot = (ts: typeof testSets) => JSON.stringify(testSets.map(
 	({ name, sample, answer }) => ({ name, sample, answer })
 ));
-const testSetsSnapshot = snapshot(testSets);;
+const testSetsSnapshot = snapshot(testSets);
 
-describe.each(L.sortsList)('$name', ({ inPlaceSort, copySort }) => {
+function formatSort({ name, isStable, isInPlace }: L.SortDef) {
+	const stable = isStable ? "stable" : "unstable";
+	const inPlace = isInPlace ? "in-place" : "copy";
+	return `${name} (${stable} ${inPlace})`;
+}
+
+describe.for(
+	L.sortsList.map(def => [formatSort(def), def] as const)
+)('%s', ([, { isStable, inPlaceSort, copySort }]) => {
 	test.each(testSets)('$name $sample -> $answer', tes => {
 		{
 			// in-place sort
 			const copied = tes.sample.slice();
 			const sorted = inPlaceSort(copied, tes.compare);
-			expect.soft(copied).toEqual(tes.answer);
-			expect.soft(sorted).toEqual(tes.answer);
+			if (isStable) expect.soft(sorted).toEqual(tes.answer);
+			else {
+				expect.soft(sorted.length).toEqual(tes.answer.length);
+				for (let i = 0; i < sorted.length; i++) {
+					expect.soft(tes.compare(sorted[i]!, tes.answer[i]!)).toBeOneOf([-0, 0]);
+				}
+			}
 			expect.soft(copied === sorted).toBe(true);
 		} {
 			// copy sort
 			const copied = tes.sample.slice();
 			const sorted = copySort(copied, tes.compare);
 			expect.soft(copied).toEqual(tes.sample);
-			expect.soft(sorted).toEqual(tes.answer);
+			if (isStable) expect.soft(sorted).toEqual(tes.answer);
+			else {
+				expect.soft(sorted.length).toEqual(tes.answer.length);
+				for (let i = 0; i < sorted.length; i++) {
+					expect.soft(tes.compare(sorted[i]!, tes.answer[i]!)).toBeOneOf([-0, 0]);
+				}
+			}
 			expect.soft(copied === sorted).toBe(false);
 		}
 	});
