@@ -3,15 +3,54 @@
  */
 export type CompareFunction<T> = (a: T, b: T) => number;
 
-export type SortFunction<T> = (
-	arr: T[],
-	compare: CompareFunction<T>,
-) => T[];
+export type InPlaceSortFunction = <T>(arr: T[], compare: CompareFunction<T>) => T[];
+export type CopySortFunction = <T>(arr: readonly T[], compare: CompareFunction<T>) => T[];
+
+export type InPlaceSortDef = {
+	name: string;
+	isInPlace: true;
+	isStable: boolean;
+	sort: InPlaceSortFunction;
+	inPlaceSort: InPlaceSortFunction;
+	copySort: CopySortFunction;
+};
+export type CopySortDef = {
+	name: string;
+	isInPlace: false;
+	isStable: boolean;
+	sort: CopySortFunction;
+	inPlaceSort: InPlaceSortFunction;
+	copySort: CopySortFunction;
+};
+export type SortDef = InPlaceSortDef | CopySortDef;
+
+function inPlaceSortDef({ isStable, sort }: Pick<InPlaceSortDef, "isStable" | "sort">): InPlaceSortDef {
+	return {
+		name: sort.name!,
+		isInPlace: true, isStable, sort,
+		inPlaceSort: sort,
+		copySort: (arr, compare) => sort(arr.slice(), compare),
+	};
+}
+
+function copySortDef({ isStable, sort }: Pick<CopySortDef, "isStable" | "sort">): CopySortDef {
+	return {
+		name: sort.name!,
+		isInPlace: false, isStable, sort,
+		inPlaceSort(arr, compare) {
+			const sorted = sort(arr, compare);
+			arr.splice(0, arr.length, ...sorted);
+			return arr;
+		},
+		copySort: sort,
+	};
+}
 
 // stable in-place
 export function esSort<T>(arr: T[], compare: CompareFunction<T>): T[] {
 	return arr.sort(compare);
 }
+export const esSortDef = inPlaceSortDef({ isStable: true, sort: esSort });
 
 // stable in-place
 export function bubbleSort<T>(arr: T[], compare: CompareFunction<T>): T[] {
@@ -27,5 +66,7 @@ export function bubbleSort<T>(arr: T[], compare: CompareFunction<T>): T[] {
 	} while (updated);
 	return arr;
 }
+export const bubbleSortDef = inPlaceSortDef({ isStable: true, sort: bubbleSort });
 
-export const sorts: Record<string, typeof esSort> = { esSort, bubbleSort };
+export const sortsRecord = { esSortDef, bubbleSortDef } as const satisfies { [key in string]: { name: key } & SortDef };
+export const sortsList = [esSortDef, bubbleSortDef] as const satisfies SortDef[];

@@ -10,16 +10,20 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "tsc -p ./tsconfig.typecheck.json && vitest run --typecheck"
+    "test": "tsc -p ./tsconfig.typecheck.json && vitest run --typecheck",
+    "test-verbose": "tsc -p ./tsconfig.typecheck.json && vitest run --typecheck --reporter=tree"
   },
   "exports": {
     "./*": "./built/*"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
+    "@types/seed-random": "^2.2.4",
+    "@vitest/ui": "^4.0.18",
+    "seed-random": "^2.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
-    "vitest": "^3.0.6"
+    "vitest": "^4.0.18"
   },
   "workspaces": [
     "packages/arkset",
