@@ -44,7 +44,7 @@ if (A.value !== unset) return A.value + 1;
 return unset;"
                 />
                 <div class="codeActions">
-                  <button class="deleter" @click="removeCode(f.id, c.id)" title="このコードを削除"><i class="bi bi-trash" /></button>
+                  <button class="deleter" @click="removeCode(f.id, c.id)" title="このコードを削除"><i class="bi bi-x" /></button>
                 </div>
               </div>
 
