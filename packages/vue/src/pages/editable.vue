@@ -15,59 +15,71 @@
           <button class="deleter" @click="removeField(f.id)" title="このフィールドを削除"><i class="bi bi-trash" /></button>
 
           <div class="row">
-            <label class="label">名前</label>
-            <input class="input" v-model.trim="f.name" placeholder="例: A" />
-          </div>
-
-          <div class="row">
             <label class="label">現在値</label>
             <div class="value">
               <code>{{ formatValue(getComputedRef(f.id)?.value) }}</code>
             </div>
           </div>
 
-          <div class="codesHead">
-            <div class="label">JavaScript コード（上から順に試す）</div>
-          </div>
-          <div class="codes">
-            <!-- コード追加（先頭） -->
-            <button class="btn codeAdder" @click="addCodeAt(f.id, 0)">＋ コードを追加</button>
+          <pre class="codesWrapper">
+            <div class="codesHeader codeStyle">
+              <span>{{"const "}}</span>
+              <input class="input" v-model.trim="f.name" placeholder="例: A" />
+              <span>{{" = multiComputed(["}}</span>
+            </div>
 
-            <template v-for="(c, ci) in f.codes" :key="c.id">
-              <div class="codeRow">
-                <textarea
-                  class="textarea"
-                  v-model="c.code"
-                  spellcheck="false"
-                  placeholder="例:
-if (A.value !== unset) return A.value + 1;
-return unset;"
-                />
-                <div class="codeActions">
-                  <button class="deleter" @click="removeCode(f.id, c.id)" title="このコードを削除"><i class="bi bi-x" /></button>
+            <div class="codes">
+              <!-- コード追加（先頭） -->
+              <button class="btn codeAdder" @click="addCodeAt(f.id, 0)">＋ コードを追加</button>
+
+              <template v-for="(c, ci) in f.codes" :key="c.id">
+                <div class="codeRow">
+                  <textarea
+                    class="textarea codeStyle"
+                    v-model="c.code"
+                    spellcheck="false"
+                    placeholder="例:
+  if (A.value !== unset) return A.value + 1;
+  return unset;"
+                  />
+                  <div class="codeActions">
+                    <button class="deleter" @click="removeCode(f.id, c.id)" title="このコードを削除"><i class="bi bi-x" /></button>
+                  </div>
                 </div>
-              </div>
 
-              <!-- 各コード欄ごとのエラー -->
-              <div class="codeError" v-if="c.error">
-                <pre class="codeErrorText">{{ c.error }}</pre>
-              </div>
+                <!-- 各コード欄ごとのエラー -->
+                <div class="codeError" v-if="c.error">
+                  <pre class="codeErrorText">{{ c.error }}</pre>
+                </div>
 
-              <!-- コード追加（各コードの下 = 間 + 末尾 になる） -->
-              <button class="btn codeAdder" @click="addCodeAt(f.id, ci + 1)">＋ コードを追加</button>
-            </template>
-          </div>
+                <!-- コード追加（各コードの下 = 間 + 末尾 になる） -->
+                <button class="btn codeAdder" @click="addCodeAt(f.id, ci + 1)">＋ コードを追加</button>
+              </template>
+            </div>
+
+            <div class="codesFooter codeStyle">
+              <span>{{"], { unset, onError: () => ({ type: 'continue' }) });"}}</span>
+            </div>
+          </pre>
         </section>
 
         <!-- フィールド追加（各カードの下 = 間 + 末尾 になる） -->
         <button class="btn fieldAdder" @click="addFieldAt(fi + 1)">＋ フィールドを追加</button>
       </template>
     </main>
+
+    <div class="fabContainer">
+      <button class="btn" @click="() => importInput?.click?.()">インポート</button>
+      <form ref="importForm" hidden>
+        <input ref="importInput" type="file" accept=".json" @change="importState" />
+      </form>
+      <a class="btn" download="multiComputed.json" :href="jsonUrl">エクスポート</a>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, shallowRef, watchEffect } from "vue";
+import { ref, reactive, shallowRef, useTemplateRef, watch, watchEffect, nextTick } from "vue";
 import trashSvgUrl from '../assets/trash.svg';
 import { multiComputed, unset } from "../lib/multiComputed";
 
@@ -76,6 +88,7 @@ import { multiComputed, unset } from "../lib/multiComputed";
 // --------------------
 type CodeItem = { id: string; code: string; error: string };
 type FieldItem = { id: string; name: string; codes: CodeItem[] };
+type FieldItemSaved = { name: string; codes: string[] };
 
 // --------------------
 // state
@@ -151,14 +164,17 @@ function suggestName() {
   return `X${fields.length + 1}`;
 }
 
-function formatValue(v: unknown) {
+function formatValue(v: unknown): string {
   if (v === unset) return "unset";
-  if (typeof v === "string") return JSON.stringify(v);
-  try {
-    return JSON.stringify(v);
-  } catch {
-    return String(v);
-  }
+  return [
+    () => (JSON.stringify(v) ?? String(v)),
+    () => `${v}`,
+    () => (v as any).toString(),
+  ].reduce((acc: null | string, fn) => {
+    if (acc !== null) return acc;
+    try { return fn() }
+    catch { return null }
+  }, null) ?? "unknown value";
 }
 
 // --------------------
@@ -184,7 +200,7 @@ function currentParamNames() {
 function makeGetter(code: string, params: string[], refsDict: Record<string, any>) {
   return () => {
     const args = params.map((p) => refsDict[p]).concat(unset);
-    const fn = new Function(...params, "unset", code) as (...xs: any[]) => any;
+    const fn = new Function(...params, "unset", `"use strict";\n${code}`) as (...xs: any[]) => any;
     return fn(...args);
   };
 }
@@ -241,6 +257,55 @@ watchEffect(() => {
   computedById.value = nextMap;
   refsByName.value = tempRefs;
 });
+
+// --------------------
+// データの保存絡み
+// --------------------
+const fieldsToSaveds = (fields_: FieldItem[]): FieldItemSaved[] =>
+  fields_.map(({ name, codes }) => (
+    { name, codes: codes.map(v => v.code) }
+  ));
+const savedsToFields = (saved: FieldItemSaved[]): FieldItem[] =>
+  saved.map(({ name, codes }) => ({
+      id: crypto.randomUUID(),
+      name,
+      codes: codes.map(code => ({
+        id: crypto.randomUUID(),
+        code,
+        error: "",
+      })),
+  }));
+function readFields(): string {
+  return JSON.stringify(fieldsToSaveds(fields));
+}
+function writeFields(json: string) {
+  fields.splice(0, Infinity, ...savedsToFields(JSON.parse(json) as any));
+}
+function createJsonUrl() {
+  return URL.createObjectURL(new Blob(
+    [readFields()],
+    { type: "application/json;charset=utf8" },
+  ));
+}
+const jsonUrl = ref<string>(createJsonUrl());
+watch([fields], () => {
+  const oldUrl =jsonUrl.value;
+  jsonUrl.value = createJsonUrl();
+  nextTick(() => URL.revokeObjectURL(oldUrl));
+});
+
+const importForm = useTemplateRef('importForm');
+const importInput = useTemplateRef('importInput');
+function importState(event: Event) {
+  const files = (event.target as any).files as FileList;
+  if (!files?.length) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    writeFields(reader.result as string);
+  });
+  reader.readAsText(files[0]!);
+  importForm.value?.reset?.();
+}
 </script>
 
 <style scoped>
@@ -293,13 +358,6 @@ watchEffect(() => {
   font-weight: 600;
   opacity: 0.85;
 }
-.row > .input {
-  flex: 1;
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-}
 .row > .value {
   flex: auto;
   padding: 8px 10px;
@@ -307,7 +365,40 @@ watchEffect(() => {
   background: rgba(0, 0, 0, 0.04);
   overflow-x: auto;
 }
+
+.codesWrapper {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.codeStyle {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.codesHeader, .codesFooter {
+  display: flex;
+  flex-direction: row;
+  color: gray;
+}
+.codesHeader > * {
+  padding-block: 10px;
+}
+.codesHeader > .input {
+  display: inline;
+  field-sizing: content;
+  padding-inline: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+.codesFooter {
+  padding-top: 10px;
+}
+
 .codes {
+  margin-left: 1em;
   display: flex;
   flex-direction: column;
 }
@@ -324,13 +415,6 @@ watchEffect(() => {
   opacity: 1;
 }
 
-.codesHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 10px 0 6px;
-}
-
 .codeRow {
   position: relative;
   display: flex;
@@ -343,9 +427,6 @@ watchEffect(() => {
   padding: 10px;
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.15);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 12.5px;
-  line-height: 1.35;
 }
 .codeActions {
   position: absolute;
@@ -361,6 +442,7 @@ watchEffect(() => {
   border: 1px solid rgb(from var(--color-danger) r g b / 0.35);
   background-color: rgb(from var(--color-danger) r g b / 0.06);
   padding: 10px;
+  text-align: left;
 }
 .codeErrorText {
   margin: 0;
@@ -380,11 +462,11 @@ watchEffect(() => {
 }
 .fieldAdder {
   border-radius: 5px;
-  border-color: #28e;
+  border-color: #8880;
   background-color: #fff;
 }
 .fieldAdder:hover {
-  background-color: #ccf5ff
+  border-color: #888;
 }
 .codeAdder {
   color: #CCC;
@@ -409,5 +491,14 @@ watchEffect(() => {
   background-color: #e333;
   border-color: #e33;
   opacity: 1;
+}
+
+.fabContainer {
+  position: fixed;
+  right: 10%;
+  bottom: 10%;
+}
+.fabContainer > * {
+  color: black;
 }
 </style>
