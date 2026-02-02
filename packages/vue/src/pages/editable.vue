@@ -12,7 +12,7 @@
 
       <template v-for="(f, fi) in fields" :key="f.id">
         <section class="card">
-          <button class="deleter" @click="removeField(f.id)"><i class="bi bi-trash" /></button>
+          <button class="deleter" @click="removeField(f.id)" title="このフィールドを削除"><i class="bi bi-trash" /></button>
 
           <div class="row">
             <label class="label">名前</label>
@@ -44,7 +44,7 @@ if (A.value !== unset) return A.value + 1;
 return unset;"
                 />
                 <div class="codeActions">
-                  <button class="deleter" @click="removeCode(f.id, c.id)"><i class="bi bi-trash" /></button>
+                  <button class="deleter" @click="removeCode(f.id, c.id)" title="このコードを削除"><i class="bi bi-trash" /></button>
                 </div>
               </div>
 
