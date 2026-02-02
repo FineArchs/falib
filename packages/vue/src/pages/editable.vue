@@ -49,7 +49,6 @@ return unset;"
 
               <!-- 各コード欄ごとのエラー -->
               <div class="codeError" v-if="c.error">
-                <div class="codeErrorTitle">このコードのエラー</div>
                 <pre class="codeErrorText">{{ c.error }}</pre>
               </div>
 
@@ -201,11 +200,6 @@ function makeGetter(code: string, params: string[], refsDict: Record<string, any
 // build computedRefs reactively
 // --------------------
 watchEffect(() => {
-  // ★再実行時にエラーを全リセット（フィールド単位ではなくコード欄単位）
-  for (const f of fields) {
-    for (const c of f.codes) c.error = "";
-  }
-
   const nextMap = new Map(computedById.value);
 
   // 一旦、既存computedを拾って name->ref を作る（未作成は後で上書き）
@@ -224,7 +218,9 @@ watchEffect(() => {
       return () => {
         const refsDict = refsByName.value;
         try {
-          return makeGetter(c.code, params, refsDict)();
+          const v = makeGetter(c.code, params, refsDict)();
+	  c.error = "";
+	  return v;
         } catch (err) {
           // ここで c.error をセットし、throw して multiComputed の onError に渡す
           const msg = err instanceof Error ? err.stack ?? err.message : String(err);
@@ -361,10 +357,6 @@ watchEffect(() => {
   border: 1px solid rgb(from var(--color-danger) r g b / 0.35);
   background-color: rgb(from var(--color-danger) r g b / 0.06);
   padding: 10px;
-}
-.codeErrorTitle {
-  font-weight: 700;
-  margin-bottom: 6px;
 }
 .codeErrorText {
   margin: 0;
