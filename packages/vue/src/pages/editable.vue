@@ -12,10 +12,11 @@
 
       <template v-for="(f, fi) in fields" :key="f.id">
         <section class="card">
+          <button class="deleter" @click="removeField(f.id)"><i class="bi bi-trash" /></button>
+
           <div class="row">
             <label class="label">名前</label>
             <input class="input" v-model.trim="f.name" placeholder="例: A" />
-            <button class="deleter" @click="removeField(f.id)"><img :src="trashSvgUrl" /></button>
           </div>
 
           <div class="row">
@@ -43,7 +44,7 @@ if (A.value !== unset) return A.value + 1;
 return unset;"
                 />
                 <div class="codeActions">
-                  <button class="deleter" @click="removeCode(f.id, c.id)"><img :src="trashSvgUrl" /></button>
+                  <button class="deleter" @click="removeCode(f.id, c.id)"><i class="bi bi-trash" /></button>
                 </div>
               </div>
 
@@ -56,14 +57,6 @@ return unset;"
               <button class="btn codeAdder" @click="addCodeAt(f.id, ci + 1)">＋ コードを追加</button>
             </template>
           </div>
-
-          <details class="hint">
-            <summary>使い方ヒント</summary>
-            <ul>
-              <li>他のフィールドは <code>名前.value</code> で参照（例: <code>A.value</code>, <code>Total.value</code>）。</li>
-              <li>次の式へ回したいときは <code>return unset</code>。</li>
-            </ul>
-          </details>
         </section>
 
         <!-- フィールド追加（各カードの下 = 間 + 末尾 になる） -->
@@ -272,40 +265,51 @@ watchEffect(() => {
 }
 
 .card {
+  position: relative;
   border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 12px;
-  padding: 12px;
+  padding: 48px 12px;
   background: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
+.card > .deleter {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
 
 .row {
-  display: grid;
-  grid-template-columns: 70px 1fr auto;
+  display: flex;
+  flex-direction: row;
   gap: 8px;
   align-items: center;
   margin-bottom: 10px;
 }
-.codes {
-  display: flex;
-  flex-direction: column;
+.row > .cardHeader {
+  flex: auto;
 }
-.label {
+.row > .label {
+  width: 70px;
   font-weight: 600;
   opacity: 0.85;
 }
-.input {
+.row > .input {
+  flex: 1;
   width: 100%;
   padding: 8px 10px;
   border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.15);
 }
-.value {
-  grid-column: 2 / 4;
+.row > .value {
+  flex: auto;
   padding: 8px 10px;
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.04);
   overflow-x: auto;
+}
+.codes {
+  display: flex;
+  flex-direction: column;
 }
 
 .btn {
@@ -395,16 +399,15 @@ watchEffect(() => {
   height: 1.5em;
   padding: 0;
   opacity: 0.5;
-  border: 1px #e33 solid;
-  background-color: #e333;
+  border: 1px #888 solid;
+  color: #888;
+  background-color: #8883;
   border-radius: 100%;
 }
 .deleter:hover {
-  background-color: #e338;
+  color: #e33;
+  background-color: #e333;
+  border-color: #e33;
   opacity: 1;
-}
-.hint {
-  margin-top: 10px;
-  opacity: 0.9;
 }
 </style>
