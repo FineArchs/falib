@@ -82,37 +82,17 @@
 import { ref, reactive, shallowRef, useTemplateRef, watch, watchEffect, nextTick } from "vue";
 import trashSvgUrl from '../assets/trash.svg';
 import { multiComputed, unset } from "../lib/multiComputed";
+import { initial, fieldsToSaveds, savedsToFields, fieldsToJson, jsonToFields } from './editable.js';
+import type { CodeItem, FieldItem, FieldItemSaved } from './editable.js';
 
-// --------------------
-// types
-// --------------------
-type CodeItem = { id: string; code: string; error: string };
-type FieldItem = { id: string; name: string; codes: CodeItem[] };
-type FieldItemSaved = { name: string; codes: string[] };
 
 // --------------------
 // state
 // --------------------
-const fields = reactive<FieldItem[]>([
-  {
-    id: crypto.randomUUID(),
-    name: "A",
-    codes: [{ id: crypto.randomUUID(), code: "return 1;", error: "" }],
-  },
-  {
-    id: crypto.randomUUID(),
-    name: "B",
-    codes: [
-      {
-        id: crypto.randomUUID(),
-        code: `if (A.value !== unset) return A.value + 10;
-return unset;`,
-        error: "",
-      },
-      { id: crypto.randomUUID(), code: "return 999;", error: "" },
-    ],
-  },
-]);
+const savekey = "editable/fields";
+const fields = reactive<FieldItem[]>((json =>
+  json ? jsonToFields(json) : savedsToFields(initial)
+)(localStorage.getItem(savekey)));
 
 // フィールドごとの computedRef を保持（id -> ComputedRef）
 const computedById = shallowRef(new Map<string, ReturnType<typeof multiComputed<any, any>>>());
@@ -261,36 +241,24 @@ watchEffect(() => {
 // --------------------
 // データの保存絡み
 // --------------------
-const fieldsToSaveds = (fields_: FieldItem[]): FieldItemSaved[] =>
-  fields_.map(({ name, codes }) => (
-    { name, codes: codes.map(v => v.code) }
-  ));
-const savedsToFields = (saved: FieldItemSaved[]): FieldItem[] =>
-  saved.map(({ name, codes }) => ({
-      id: crypto.randomUUID(),
-      name,
-      codes: codes.map(code => ({
-        id: crypto.randomUUID(),
-        code,
-        error: "",
-      })),
-  }));
 function readFields(): string {
-  return JSON.stringify(fieldsToSaveds(fields));
+  return fieldsToJson(fields);
 }
 function writeFields(json: string) {
-  fields.splice(0, Infinity, ...savedsToFields(JSON.parse(json) as any));
+  fields.splice(0, Infinity, ...jsonToFields(json));
 }
-function createJsonUrl() {
+function createJsonUrl(json: string) {
   return URL.createObjectURL(new Blob(
-    [readFields()],
+    [json],
     { type: "application/json;charset=utf8" },
   ));
 }
-const jsonUrl = ref<string>(createJsonUrl());
+const jsonUrl = ref<string>(createJsonUrl(readFields()));
 watch([fields], () => {
   const oldUrl =jsonUrl.value;
-  jsonUrl.value = createJsonUrl();
+  const json = readFields();
+  localStorage.setItem(savekey, json);
+  jsonUrl.value = createJsonUrl(json);
   nextTick(() => URL.revokeObjectURL(oldUrl));
 });
 
