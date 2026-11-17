@@ -28,5 +28,8 @@
   "workspaces": [
     "packages/arkset",
     "packages/vue"
-  ]
+  ],
+  "allowScripts": {
+    "esbuild@0.28.2": true
+  }
 }
